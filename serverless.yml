@@ -9,6 +9,28 @@ provider:
         - Effect: Allow
           Action: "dynamodb:*"
           Resource: arn:aws:dynamodb:us-east-1:${env:ID_ACCOUNT}:table/usersTable
+        - Effect: Allow
+          Action:
+            - 's3:GetObject'  #read
+            - 's3:PutObject'  #write
+          Resource: 
+            - 'arn:aws:s3:::serverless-course--${env:ID_ACCOUNT}-us-east-1-bucket-be5e1950/*'
+  environment:
+    BUCKET: !Join 
+      - '-'
+      - - serverless-course-
+        - !Ref AWS::AccountId
+        - !Ref AWS::Region
+        - 'bucket'
+        - !Select 
+          - 0
+          - !Split 
+            - '-'
+            - !Select 
+              - 2
+              - !Split 
+                - /
+                - !Ref AWS::StackId
 
 plugins:
   - serverless-dynamodb
@@ -100,6 +122,19 @@ functions:
             parameters:
               paths:
                 id: true
+  signedURL:
+    handler: signedurl/handler.signedS3URL
+    package:
+      patterns:
+        - "signedurl/handler.js"
+    events:
+      - http:
+          path: signedurl
+          method: GET
+          request:
+            parameters:
+              querystrings:
+                filename: true
 
 resources:
   Resources:
@@ -116,3 +151,48 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+          
+    S3Bucket:
+      Type: "AWS::S3::Bucket"
+      Properties:
+        #AccessControl: PublicRead
+        BucketName: !Join 
+          - '-'
+          - - serverless-course-
+            - !Ref AWS::AccountId
+            - !Ref AWS::Region
+            - 'bucket'
+            - !Select 
+              - 0
+              - !Split 
+                - '-'
+                - !Select 
+                  - 2
+                  - !Split 
+                    - /
+                    - !Ref AWS::StackId
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        OwnershipControls:
+          Rules:
+          - ObjectOwnership: ObjectWriter 
+
+    SampleBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref S3Bucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Action:
+              - "s3:GetObject"
+              Effect: Allow
+              Resource: !Join
+                - ""
+                - - "arn:aws:s3:::"
+                  - !Ref S3Bucket
+                  - /*
+              Principal: "*"
