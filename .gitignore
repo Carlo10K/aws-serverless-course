@@ -94,3 +94,5 @@ Thumbs.db
 package-lock.json
 venv
 node_modules
+
+app

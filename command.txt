@@ -1,0 +1,4 @@
+aws lambda publish-layer-version --layer-name my-first-layer --description "My first layer" \
+    --license-info "MIT" \
+    --zip-file fileb://nodejs.zip \
+    --compatible-architectures "arm64" "x86_64"
