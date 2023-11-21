@@ -34,6 +34,7 @@ provider:
               - !Split 
                 - /
                 - !Ref AWS::StackId
+    SECRET_KEY: ${ssm:/SECRET_KEY}
 
 plugins:
   - serverless-dynamodb
@@ -62,6 +63,11 @@ custom:
     # noStart: true
 
 functions:
+  custom-authorizer:
+    handler: authorizer/handler.authorizer
+    package:
+      patterns:
+        - "authorizer/handler.js"
   hello-world:
     handler: handler.hello
     package:
@@ -93,6 +99,9 @@ functions:
     events:
       - http:
           path: user
+          authorizer:
+            name: custom-authorizer
+            resultTtlInSeconds: 15
           method: POST
           request:
             schemas:
