@@ -135,6 +135,42 @@ functions:
             parameters:
               querystrings:
                 filename: true
+  thumbGenerator:
+    handler: thumbnail/handler.thumbnailGenerator
+    layers:
+      - { Ref: BaseLambdaLayer }
+    package:
+      patterns:
+        - "thumbnail/handler.js"
+    events:
+      - s3:
+          bucket: !Join 
+          - '-'
+          - - serverless-course-
+            - !Ref AWS::AccountId
+            - !Ref AWS::Region
+            - 'bucket'
+            - !Select 
+              - 0
+              - !Split 
+                - '-'
+                - !Select 
+                  - 2
+                  - !Split 
+                    - /
+                    - !Ref AWS::StackId
+          event: s3:ObjectCreated:*
+          existing: true
+          rules:
+            - prefix: upload/
+
+layers:
+  base:
+    name: "prod-dependencies"
+    compatibleRuntimes:
+      - "nodejs14.x"
+    package:
+      artifact: app/nodejs.zip
 
 resources:
   Resources:
